@@ -1,0 +1,4 @@
+node_modules/
+packet-lock.json
+.DS_Store
+.env
