@@ -1,61 +1,52 @@
 const express = require('express');
 const router = express.Router();
+const { isLoggedIn } = require('../middleware');
+const Product = require('../models/product');
 const User = require('../models/user');
-const passport = require('passport');
 
 
-
-// router.get('/fakeUser', async (req, res) => {
-
-//     const user = new User({ email: 'sabeel@gmail.com',username:'sabeel' });
-//     const newUser = await User.register(user, 'sabeel12');
-//     res.send(newUser);
-// })
-
-
-// Get the signup form
-router.get('/register', async (req, res) => {
-    res.render('auth/signup');
-})
-
-router.post('/register', async (req, res) => {
+router.get('/user/:userId/cart',isLoggedIn,async (req, res) => {
     
     try {
-        const user = new User({ username: req.body.username, email: req.body.email });
-        const newUser = await User.register(user, req.body.password);
-        req.flash('success', 'Registered Successfully,Please Login to Continue');
-        res.redirect('/login');
+        const user = await User.findById(req.params.userId).populate('cart');
+        res.render('cart/showCart', { userCart: user.cart });
     }
     catch (e) {
-        req.flash('error', e.message);
-        res.redirect('/register')
+        req.flash('error', 'Unable to Add this product');
+        res.render('error');
+    }
+})
+
+
+
+router.post('/user/:id/cart', isLoggedIn, async (req, res) => {
+  
+    try {
+        const product = await Product.findById(req.params.id);
+
+        const user = req.user;
+
+        user.cart.push(product);
+
+        await user.save();
+        req.flash('success', 'Added to cart successfully')
+        res.redirect(`/user/${req.user._id}/cart`);
+    }
+    catch (e) {
+        req.flash('error', 'Unable to get the cart at this moment');
+        res.render('error');
     }
 });
 
+router.delete('/user/:userid/cart/:id', async(req, res) => {
 
-// Get the login form
-router.get('/login', async (req, res) => {
-    
-    res.render('auth/login')
+    const { userid, id } = req.params;
+    await User.findByIdAndUpdate(userid,{$pull:{cart:id}})
+    res.redirect(`/user/${req.user._id}/cart`);
 })
 
-router.post('/login',
-    passport.authenticate('local',
-        {
-            failureRedirect: '/login',
-            failureFlash: true
-        }
-    ), (req, res) => {
-        req.flash('success', `Welcome Back!! ${req.user.username}`)
-        res.redirect('/products');
-});
-
-// Logout the user from the current session
-router.get('/logout', (req, res) => {
-    req.logout();
-    req.flash('success', 'Logged Out Successfully');
-    res.redirect('/login');
+router.get('/cart/payment', (req, res) => {
+    res.render('payment/payment')
 })
-
 
 module.exports = router;
