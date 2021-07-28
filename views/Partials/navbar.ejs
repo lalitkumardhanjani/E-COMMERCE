@@ -22,7 +22,7 @@
 
           <%if(!currentUser){%>
           <a href="/login" class="nav-link active">Login</a>
-          <a href="/register" class="nav-link active">SignUp</a>
+          <a href="/register" class="nav-link active">Register</a>
           <%} else {%>
             <a href="#" class="nav-link active text-capitalize">Hello <%= currentUser.username %> </a>
             <a href="/user/<%= currentUser._id %>/cart " class="nav-link active"><i class="fas fa-shopping-cart"></i> 
